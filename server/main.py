@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import os
 import pytz
-from tickers_for_trading_platform_202007_sorted import *
+from tickers_202006_sorted import *
 
 import numpy as np
 import pandas as pd
