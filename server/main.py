@@ -5,7 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import os
 import pytz
-from tickers_202006_sorted import *
+from tickers_sorted import *
 
 import numpy as np
 import pandas as pd
@@ -87,7 +87,7 @@ def create_strategy():
                        datetime(2020, 4, 1),
                        datetime(2020, 7, 1) ]
         
-        all_data = pd.read_csv('data_for_trading_platform_202007.csv')
+        all_data = pd.read_csv('data_for_trading_platform.csv')
         all_data['Date'] = pd.to_datetime(all_data['Date'], format='%Y-%m-%d')
         
         def stockpri(ticker, start, end):

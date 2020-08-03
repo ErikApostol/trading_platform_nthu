@@ -17,5 +17,5 @@ for stock in asset_candidates:
     y = get_symbol(stock[0])
     new_list.append((stock[0], y))
 
-with open('tickers_202006_sorted.py', 'w') as f:
+with open('tickers_sorted.py', 'w') as f:
     print('asset_candidates = ', new_list, file=f)
