@@ -2,7 +2,7 @@ from flask import Flask, Blueprint, render_template, session, jsonify, request, 
 from flask_login import login_required, current_user, login_user, logout_user
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import pytz
 from tickers_sorted import *
@@ -120,6 +120,9 @@ def create_strategy():
             returns = returns.dropna()
             log_returns = np.log(data.pct_change() + 1)
             log_returns = log_returns.dropna()
+
+            if log_returns.empty:
+                continue
             
             # Markowitz frontier
             profit = np.linspace(0., 3., 100)
@@ -147,6 +150,9 @@ def create_strategy():
                     frontier.append(np.array([p, s]))
                     w.append(res_weight)
             frontier = np.array(frontier)
+            if frontier.shape == (0,):
+                flash('無法畫出馬可維茲邊界，請換一個組合', 'danger')
+                return render_template('create_strategy.html', asset_candidates=asset_candidates)
             x = np.array(frontier[:, 0])
             y = np.array(frontier[:, 1])
         
@@ -190,14 +196,14 @@ def create_strategy():
         cur.execute('insert into strategy (strategy_name, author, create_date, sharpe_ratio, return, volatility, max_drawdown) values (?,?,?,?,?,?,?)', 
                    [strategy_name, 
                     session['USERNAME'], 
-                    datetime.strftime(datetime.utcnow().replace(tzinfo=pytz.timezone('Asia/Taipei')), '%Y/%m/%d %H:%M'),
+                    datetime.strftime(datetime.now() + timedelta(hours=8), '%Y/%m/%d %H:%M'),
                     sharpe_ratio,
                     avg_annual_return,
                     annual_volatility,
                     max_drawdown
                    ] )
         db.commit()
-        flash('回測需要時間，可稍後到討論區查看結果。', 'success')
+        flash('回測已完成，請到討論區查看結果。', 'success')
 
         # record the list of tickers into database
         strategy_id = cur.lastrowid
@@ -261,7 +267,7 @@ def signup_post():
     db = get_db()
     sql_result = db.execute('select * from user where username=?', [username]).fetchone()
     if sql_result:  # if a user is found, we want to redirect back to signup page so user can try again
-        flash('這個使用者代號已經被使用', 'danger')
+        flash('這個Email地址已經被使用', 'danger')
         db.close()    
         return redirect('/signup')
 
@@ -284,7 +290,7 @@ def signup_post():
 @main.route('/forum')
 def forum_index():
     db = get_db()
-    data = db.execute('select * from strategy').fetchall()
+    data = db.execute('select * from strategy order by strategy_id desc').fetchall()
 
     content_list = []
     for d in data:

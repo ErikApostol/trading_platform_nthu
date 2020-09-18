@@ -16,7 +16,7 @@
                         <div class="">
                             <div class="">
                                 <p class="text-content text-center font-weight-light my-4">
-                                    {{ data['strategy_content']['strategy_name'] }}
+                                    {{ data['strategy_content']['strategy_name'] }} created by {{ data['strategy_content']['author'] }}
                                     <span class="solved" title="Solved">
                                         <i class="mdi mdi-checkbox-marked-circle"></i>
                                     </span>
@@ -42,7 +42,7 @@
                                                     <ul>
                                                         {% for ticker in data['asset_content'] %}
                                                             <li class="text-content font-weight-light">
-                                                                {{ ticker['asset_ticker'] }}: {{ ticker['weight'] }}
+                                                                {{ ticker['asset_ticker'] }}: {{ '%0.4f' | format(100*ticker['weight']|float) }}%
                                                             </li>
                                                         {% endfor %}
                                                     </ul>
@@ -51,16 +51,16 @@
                                                     </p>
                                                     <ul>
                                                         <li class="text-content font-weight-light">
-                                                            年報酬率：{{ data['strategy_content']['return'] }}
+                                                            年報酬率：{{ '%0.4f' | format(100*data['strategy_content']['return']|float) }}%
                                                         </li>
                                                         <li class="text-content font-weight-light">
-                                                            Sharpe ratio：{{ data['strategy_content']['sharpe_ratio'] }}
+                                                            Sharpe ratio：{{ '%0.4f' | format(data['strategy_content']['sharpe_ratio']|float) }}
                                                         </li>
                                                         <li class="text-content font-weight-light">
-                                                            Maximum Drawdown：{{ data['strategy_content']['max_drawdown'] }}
+                                                            Maximum Drawdown：{{ '%0.4f' | format(100*data['strategy_content']['max_drawdown']|float) }}%
                                                         </li>
                                                         <li class="text-content font-weight-light">
-                                                            波動率：{{ data['strategy_content']['volatility'] }}
+                                                            波動率：{{ '%0.4f' | format(100*data['strategy_content']['volatility']|float) }}%
                                                         </li>
                                                     </ul>
                                                 </div>

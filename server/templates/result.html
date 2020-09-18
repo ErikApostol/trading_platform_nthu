@@ -6,6 +6,7 @@
         <h1 class="mt-4">分析結果</h1>
         <ol class="breadcrumb mb-4">
             <li class="breadcrumb-item active">分析結果需要時間，請耐心等待</li>
+            <li class="breadcrumb-item active">點選ID可以加入該策略的討論</li>
         </ol>
         
         <div class="card mb-4">
@@ -38,7 +39,7 @@
                         <tbody id="result_tbody">
                             {% for result in results %}
                                 <tr>
-                                    <td>{{ result['strategy_id'] }}</td>
+                                    <td><a href="/post_page?post_id={{ result['strategy_id'] }}">{{ result['strategy_id'] }}</a></td>
                                     <td>{{ result['strategy_name'] }}</td>
                                     <td>{{ result['author'] }}</td>
                                     <td>{{ result['create_date'] }}</td>
@@ -47,10 +48,10 @@
                                     {% else %}
                                         <td>分析中</td>
                                     {% endif %}
-                                    <td>{{ result['return'] }}</td>
-                                    <td>{{ result['sharpe_ratio'] }}</td>
-                                    <td>{{ result['max_drawdown'] }}</td>
-                                    <td>{{ result['volatility'] }}</td>
+                                    <td>{{ '%0.4f' | format(100*result['return']|float) }}%</td>
+                                    <td>{{ '%0.4f' | format(result['sharpe_ratio']|float) }}</td>
+                                    <td>{{ '%0.4f' | format(100*result['max_drawdown']|float) }}%</td>
+                                    <td>{{ '%0.4f' | format(100*result['volatility']|float) }}%</td>
                                 </tr>
                             {% endfor %}
                         </tbody>

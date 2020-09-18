@@ -6,7 +6,7 @@ include/*
 lib/*
 server/tmp/*
 server/config.py
-server/data_for_trading_platform_202007.csv*
+server/data_for_trading_platform.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
