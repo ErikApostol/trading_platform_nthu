@@ -32,7 +32,7 @@
 
                                     <div class="form-group">
                                         <input type="button" value="add entry" id="add" class="btn btn-primary"/>
-                                        <input type="submit" value="submit" class="btn btn-success"/>
+                                        <input type="submit" value="submit" class="btn btn-success" onclick="return confirm('按下「OK/是/確定」之後，您的投組就立即送出。您可以離開或關閉這個頁面，分析程式會繼續執行。但是請不要重複按「Submit」按鈕。')"/>
                                     </div>
                                 </form>
                                 <script src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
@@ -60,7 +60,7 @@
                                 
                             </div>
                             <div class="card-footer text-center">
-                                <div class="small">請稍等約一分鐘，出現「回測已完成」訊息後再離開本頁面。</div>
+                                <div class="small"></div>
                             </div>
                         </div>
                     </div>

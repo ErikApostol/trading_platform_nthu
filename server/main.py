@@ -188,7 +188,6 @@ def create_strategy():
         print('The last optimal weights are\n', optimal_weights)
         print('Sharpe ratio: ', sharpe_ratio, ', Return: ', avg_annual_return, ', Volatility: ', annual_volatility, ', Maximum Drawdown: ', max_drawdown)
         
-        print(portfolio_value)
         plt.plot(portfolio_value.iloc[1:])
 
         db = get_db()
