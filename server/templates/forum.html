@@ -34,7 +34,7 @@
                         </a>
                             </p>
                             <p class="tags-content">
-                                <a class="tag is-rounded is-success">post by {{ forum_data['content'][i]['user_name'] }}</a>
+                                <a class="tag is-rounded is-success">post by {{ forum_data['content'][i]['user_name'] | my_substitution }}</a>
                                 <a class="tag is-rounded is-warning">{{ forum_data['content'][i]['time'] }}</a>
                             </p>
                         </div>

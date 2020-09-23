@@ -1,10 +1,12 @@
 from flask import Flask, Blueprint, render_template, session, jsonify, request, redirect, url_for, flash, g
 from flask_login import login_required, current_user, login_user, logout_user
+#from flask_environments import Environments
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import os
 import pytz
+import re
 from tickers_sorted import *
 
 import numpy as np
@@ -20,6 +22,16 @@ main = Flask(__name__)
 #main = Blueprint('main', __name__)
 
 main.config['SECRET_KEY'] = os.urandom(30)
+
+#env = Environments(main)
+
+# Source: https://uniwebsidad.com/libros/explore-flask/chapter-8/custom-filters
+@main.template_filter('my_substitution')
+def my_substitution(string):
+    return re.sub(r'@[a-zA-Z0-9_\-\.]+', r'', string)
+
+#env.filters['my_substitution'] = my_substitution
+                                    
 
 
 

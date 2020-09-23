@@ -42,7 +42,7 @@
                                 <tr>
                                     <td><a href="/post_page?post_id={{ result['strategy_id'] }}">{{ result['strategy_id'] }}</a></td>
                                     <td>{{ result['strategy_name'] }}</td>
-                                    <td>{{ result['author'] }}</td>
+                                    <td>{{ result['author'] | my_substitution }}</td>
                                     <td>{{ result['create_date'] }}</td>
                                     {% if result['return'] %}
                                         <td>完成</td>
