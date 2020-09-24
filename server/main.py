@@ -65,15 +65,12 @@ def create_strategy():
         if strategy_name == '':
             flash('請取一個名字', 'danger')
             return render_template('create_strategy.html', asset_candidates=asset_candidates)
-        tickers = list(set(request.form.getlist('asset_ticker')))
-        print(tickers)
-        print(type(tickers))
+        tickers = sorted(list(set(request.form.getlist('asset_ticker'))))
+        print('The list of assets: ', tickers)
 
         
         # Turn off progress printing
         solvers.options['show_progress'] = False
-        
-        port = tickers
         
         start_dates = [datetime(2015, 1, 1),
                        datetime(2015, 4, 1),
@@ -125,7 +122,7 @@ def create_strategy():
             start = start_dates[i]
             end   = start_dates[i+2]
         
-            data = pd.DataFrame({ ticker: stockpri(ticker, start, end) for ticker in port })
+            data = pd.DataFrame({ ticker: stockpri(ticker, start, end) for ticker in tickers })
             data = data.dropna()
             
             returns = data.pct_change() + 1
@@ -142,7 +139,7 @@ def create_strategy():
             w = []
             for p in profit:
                 # Problem data.
-                n = len(port)
+                n = len(tickers)
                 S = matrix(log_returns.cov().values*252)
                 pbar = matrix(0.0, (n,1))
                 G = matrix(0.0, (2*n,n))
@@ -178,12 +175,11 @@ def create_strategy():
             start = start_dates[i+2]
             end   = start_dates[i+3]
         
-            data = pd.DataFrame({ ticker: stockpri(ticker, start, end) for ticker in port })
+            data = pd.DataFrame({ ticker: stockpri(ticker, start, end) for ticker in tickers })
             data = data.dropna()
             
             returns = data.pct_change() + 1
             returns = returns.dropna()
-            #print(returns.keys)
             log_returns = np.log(data.pct_change() + 1)
             log_returns = log_returns.dropna()
         
