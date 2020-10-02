@@ -142,11 +142,12 @@ def create_strategy():
                 n = len(tickers)
                 S = matrix(log_returns.cov().values*252)
                 pbar = matrix(0.0, (n,1))
+                # Gx <= h
                 G = matrix(0.0, (2*n,n))
                 G[::(2*n+1)] = 1.0
                 G[n::(2*n+1)] = -1.0
                 # h = matrix(1.0, (2*n,1))
-                h = matrix(np.concatenate((np.ones((n,1)), np.zeros((n,1))), axis=0))
+                h = matrix(np.concatenate((0.5*np.ones((n,1)), -0.03*np.ones((n,1))), axis=0))
                 A = matrix(np.concatenate((np.ones((1,n)), np.exp(log_returns.mean()*252).values.reshape((1,n))), axis=0))
                 b = matrix([1, p], (2, 1))
                 
