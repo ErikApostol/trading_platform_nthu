@@ -94,7 +94,8 @@ def create_strategy():
                        datetime(2019, 10, 1),
                        datetime(2020, 1, 1),
                        datetime(2020, 4, 1),
-                       datetime(2020, 7, 1) ]
+                       datetime(2020, 7, 1),
+                       datetime(2020, 10, 1) ]
         
         all_data = pd.read_csv('data_for_trading_platform.csv')
         all_data['Date'] = pd.to_datetime(all_data['Date'], format='%Y-%m-%d')
