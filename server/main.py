@@ -162,6 +162,33 @@ def create_strategy():
                     w.append(res_weight)
             frontier = np.array(frontier)
             if frontier.shape == (0,):
+                sharpe_ratio = avg_annual_return = annual_volatility = max_drawdown = 0
+                optimal_weights = [0, ]*len(tickers)
+                db = get_db()
+                cur = db.cursor()
+                create_date = datetime.strftime(datetime.now() + timedelta(hours=8), '%Y/%m/%d %H:%M') 
+                cur.execute('insert into strategy (strategy_name, author, create_date, sharpe_ratio, return, volatility, max_drawdown) values (?,?,?,?,?,?,?)', 
+                           [strategy_name, 
+                            session['USERNAME'], 
+                            create_date,
+                            sharpe_ratio,
+                            avg_annual_return,
+                            annual_volatility,
+                            max_drawdown
+                           ] )
+                db.commit()
+
+                # record the list of tickers into database
+                strategy_id = db.execute('select * from strategy where create_date=?', [create_date]).fetchone()['strategy_id']
+                # strategy_id = cur.lastrowid
+                plt.savefig('static/img/portfolio_values/'+str(strategy_id)+'.png')
+                plt.close()
+                print('strategy_id' + str(strategy_id))
+                for i in range(len(tickers)):
+                    cur.execute('insert into assets_in_strategy (strategy_id, asset_ticker, weight) values (?, ?, ?)', [strategy_id, tickers[i], optimal_weights[i]])
+                    db.commit()
+
+                db.close()    
                 flash('無法畫出馬可維茲邊界，請換一個組合', 'danger')
                 return render_template('create_strategy.html', asset_candidates=asset_candidates)
             x = np.array(frontier[:, 0])
@@ -202,10 +229,11 @@ def create_strategy():
 
         db = get_db()
         cur = db.cursor()
+        create_date = datetime.strftime(datetime.now() + timedelta(hours=8), '%Y/%m/%d %H:%M') 
         cur.execute('insert into strategy (strategy_name, author, create_date, sharpe_ratio, return, volatility, max_drawdown) values (?,?,?,?,?,?,?)', 
                    [strategy_name, 
                     session['USERNAME'], 
-                    datetime.strftime(datetime.now() + timedelta(hours=8), '%Y/%m/%d %H:%M'),
+                    create_date,
                     sharpe_ratio,
                     avg_annual_return,
                     annual_volatility,
@@ -215,7 +243,8 @@ def create_strategy():
         flash('回測已完成，請到討論區查看結果。', 'success')
 
         # record the list of tickers into database
-        strategy_id = cur.lastrowid
+        strategy_id = db.execute('select * from strategy where create_date=?', [create_date]).fetchone()['strategy_id']
+        # strategy_id = cur.lastrowid
         plt.savefig('static/img/portfolio_values/'+str(strategy_id)+'.png')
         plt.close()
         print('strategy_id' + str(strategy_id))
