@@ -4,6 +4,7 @@ from flask_login import login_required, current_user, login_user, logout_user
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import os
 import pytz
 import re
@@ -616,6 +617,11 @@ def analysis_result():
     tw = request.values.get('tw')
     tw_digit = 1 if tw=='true' else 0 if tw=='false' else None
 
+    start_of_this_month = (datetime.now() + timedelta(hours=8)).replace(day=1, hour=0, minute=0, second=0, microsecond=0) 
+    start_of_prev_month = start_of_this_month - relativedelta(months=1)
+    start_of_this_month_str = start_of_this_month.strftime('%Y/%m/%d %H:%M')
+    start_of_prev_month_str = start_of_prev_month.strftime('%Y/%m/%d %H:%M')
+
     if sortby == 'default':
         sql_results = db.execute('select * from strategy where tw=? order by strategy_id desc', [tw_digit]).fetchall()
     elif sortby == 'myself':
@@ -628,6 +634,12 @@ def analysis_result():
         sql_results = db.execute('select * from strategy where tw=? order by sharpe_ratio desc', [tw_digit]).fetchall()
     elif sortby == 'mdd':
         sql_results = db.execute('select * from strategy where tw=? order by max_drawdown asc', [tw_digit]).fetchall()
+    elif sortby == 'this_month':
+        sql_results = db.execute('select * from strategy where tw=? and create_date>=? order by sharpe_ratio desc', 
+                                 [tw_digit, start_of_this_month_str]).fetchall()
+    elif sortby == 'prev_month':
+        sql_results = db.execute('select * from strategy where tw=? and create_date>=? and create_date<? order by sharpe_ratio desc', 
+                                 [tw_digit, start_of_prev_month_str, start_of_this_month_str]).fetchall()
     db.close()    
     return render_template('result.html', results=sql_results, tw=tw)
 
