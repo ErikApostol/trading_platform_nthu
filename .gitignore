@@ -9,6 +9,7 @@ server/config.py
 server/data_for_trading_platform.csv
 server/data_for_trading_platform_tw.csv
 server/data_for_trading_platform.csv*
+server/black_list.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
