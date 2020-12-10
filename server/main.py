@@ -10,6 +10,7 @@ import pytz
 import re
 from tickers_sorted import *
 from tickers_sorted_tw import *
+from black_list import black_list
 
 import numpy as np
 import pandas as pd
@@ -62,6 +63,9 @@ def create_strategy():
     if not (session.get('USERNAME') and session['USERNAME']):
         flash('使用此功能必須先登入。', 'danger')
         return redirect('/login')
+    if session['USERNAME'] in black_list:
+        flash('我們已經暫停您建立策略的權利，有疑問請洽finteck@my.nthu.edu.tw', 'danger')
+        return redirect('/')
     if request.method == 'POST':
         strategy_name = request.form['strategy_name']
         if strategy_name == '':
@@ -264,6 +268,9 @@ def create_strategy_tw():
     if not (session.get('USERNAME') and session['USERNAME']):
         flash('使用此功能必須先登入。', 'danger')
         return redirect('/login')
+    if session['USERNAME'] in black_list:
+        flash('我們已經暫停您建立策略的權利，有疑問請洽finteck@my.nthu.edu.tw', 'danger')
+        return redirect('/')
     if request.method == 'POST':
         strategy_name = request.form['strategy_name']
         if strategy_name == '':
