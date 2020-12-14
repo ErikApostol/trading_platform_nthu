@@ -1,0 +1,13 @@
+select strategy_id,
+       author,
+       create_date,
+       return,
+       max(sharpe_ratio) as max_sharpe_ratio,
+       max_drawdown,
+       strategy_name,
+       volatility,
+       tw  
+from strategy
+where create_date>='2020/11/01 00:00' and create_date<'2020/12/01 00:00'
+group by author
+order by max_sharpe_ratio desc;
