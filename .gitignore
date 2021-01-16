@@ -6,10 +6,10 @@ include/*
 lib/*
 server/tmp/*
 server/config.py
-server/data_for_trading_platform.csv
-server/data_for_trading_platform_tw.csv
-server/data_for_trading_platform.csv*
+server/data_for_trading_platform*
 server/black_list.py
+server/static/img/portfolio_values/*
+server/static/img/quarterly_returns/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -586,5 +586,12 @@ asset_candidates =  [
 ('3491.TW', '昇達科'),
 ('3105.TW', '穩懋'),
 ('5439.TW', '高技'),
-('XAU', 'Gold per ounce / US Dollar Spot')
+('XAU', 'Gold per ounce / US Dollar Spot'),
+# Ark Investment Management ETFs
+('ARKF', 'ARK Fintech Innovation ETF'), 
+('ARKG', 'ARK Genomic Revolution ETF'), 
+('ARKK', 'ARK Innovation ETF'), 
+('ARKQ', 'ARK Autonomous Technology & Robotics ETF'), 
+('ARKW', 'ARK Next Generation Internet ETF')
+
 ]
