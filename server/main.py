@@ -114,7 +114,8 @@ def create_strategy():
                        datetime(2020, 1, 1),
                        datetime(2020, 4, 1),
                        datetime(2020, 7, 1),
-                       datetime(2020, 10, 1) ]
+                       datetime(2020, 10, 1),
+                       datetime(2021, 1, 1) ]
         
         if tw=='false': 
             all_data = pd.read_csv('data_for_trading_platform.csv')  
@@ -130,13 +131,6 @@ def create_strategy():
             data = data['Adj Close']
             return data
         
-        def result(weight):
-            sigma = np.sqrt(np.dot(weight, np.dot(log_returns.cov()*252, weight.T)))
-            profit = np.dot(weight, np.exp(log_returns.mean()*252) - 1) + 1
-            return np.array([sigma, profit, profit/sigma])
-        
-        def sigma(weight):
-            return result(weight)[0]
         
         portfolio_value = pd.Series([100])
         optimal_weights = None
@@ -164,28 +158,40 @@ def create_strategy():
             profit = np.linspace(0., 3., 100)
             frontier = []
             w = []
-            for p in profit:
-                # Problem data.
-                n = len(tickers)
-                S = matrix(log_returns.cov().values*252)
-                pbar = matrix(0.0, (n,1))
-                # Gx <= h
-                G = matrix(0.0, (2*n,n))
-                G[::(2*n+1)] = 1.0
-                G[n::(2*n+1)] = -1.0
-                # h = matrix(1.0, (2*n,1))
-                h = matrix(np.concatenate((0.5*np.ones((n,1)), -0.03*np.ones((n,1))), axis=0))
-                A = matrix(np.concatenate((np.ones((1,n)), np.exp(log_returns.mean()*252).values.reshape((1,n))), axis=0))
-                b = matrix([1, p], (2, 1))
+            if len(tickers) >= 3:
+                for p in profit:
+                    # Problem data.
+                    n = len(tickers)
+                    S = matrix(log_returns.cov().values*252)
+                    pbar = matrix(0.0, (n,1))
+                    # Gx <= h
+                    G = matrix(0.0, (2*n,n))
+                    G[::(2*n+1)] = 1.0
+                    G[n::(2*n+1)] = -1.0
+                    # h = matrix(1.0, (2*n,1))
+                    h = matrix(np.concatenate((0.5*np.ones((n,1)), -0.03*np.ones((n,1))), axis=0))
+                    A = matrix(np.concatenate((np.ones((1,n)), np.exp(log_returns.mean()*252).values.reshape((1,n))), axis=0))
+                    b = matrix([1, p], (2, 1))
+                    
+                    # Compute trade-off.
+                    res = qp(S, -pbar, G, h, A, b)
                 
-                # Compute trade-off.
-                res = qp(S, -pbar, G, h, A, b)
-            
-                if res['status'] == 'optimal':
-                    res_weight = res['x']
-                    s = math.sqrt(dot(res_weight, S*res_weight))
+                    if res['status'] == 'optimal':
+                        res_weight = res['x']
+                        print(type(res_weight))
+                        s = math.sqrt(dot(res_weight, S*res_weight))
+                        frontier.append(np.array([p, s]))
+                        w.append(res_weight)
+            elif len(tickers) == 2:
+                for p in profit:
+                    mu = np.exp(log_returns.mean()*252).values
+                    S = log_returns.cov().values*252
+                    res_weight = [1 - (p-mu[0])/(mu[1]-mu[0]), (p-mu[0])/(mu[1]-mu[0])]
+                    s = math.sqrt(np.matmul(res_weight, np.matmul(S, np.transpose(res_weight))))
                     frontier.append(np.array([p, s]))
                     w.append(res_weight)
+
+
             frontier = np.array(frontier)
             if frontier.shape == (0,):
                 continue

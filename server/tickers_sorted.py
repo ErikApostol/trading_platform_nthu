@@ -572,8 +572,8 @@ asset_candidates =  [
 ('9910.TW', '豐泰'),
 ('0050.TW', '元大台灣50'),
 # Crypto
-('BTC', 'Bitcoin 比特幣'),
-('ETH', 'Ethereum 乙太幣'),
+('BTC-USD', 'Bitcoin 比特幣'),
+('ETH-USD', 'Ethereum 乙太幣'),
 # 劭偉、正威競賽用
 ('00720B.TW', '元大投資級公司債'),
 ('00725B.TW', '國泰投資級公司債'),
@@ -592,6 +592,8 @@ asset_candidates =  [
 ('ARKG', 'ARK Genomic Revolution ETF'), 
 ('ARKK', 'ARK Innovation ETF'), 
 ('ARKQ', 'ARK Autonomous Technology & Robotics ETF'), 
-('ARKW', 'ARK Next Generation Internet ETF')
-
+('ARKW', 'ARK Next Generation Internet ETF'),
+# 2021-01-29 18:54
+('SPY', 'SPDR S&P 500 Trust ETF'),
+('IEF', 'iShares 7-10 Year Treasury Bond ETF')
 ]

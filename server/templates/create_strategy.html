@@ -8,6 +8,13 @@
             <div class="container">
                 <div class="row justify-content-center">
                     <div class="col-lg-5">
+                        {% if tw=='false' %}
+                        <br/>
+                        <ol class="breadcrumb mb-4">
+                            <li class="breadcrumb-item active">注意比特幣與乙太幣的代碼分別為BTC-USD、ETH-USD。</li>
+                            <!-- <li class="breadcrumb-item active"></li> -->
+                        </ol>
+                        {% endif %}
                         <div class="card shadow-lg border-0 rounded-lg mt-5">
                             <div class="card-header"><h3 class="text-center font-weight-light my-4">建立投資組合{% if tw=='true' %}（台股）{% elif tw=='false' %}（不限台股）{% endif %}</h3></div>
                             <div class="card-body">
@@ -827,6 +834,13 @@
                             <p>VEA: Vanguard FTSE Developed Markets Index Fund ETF Shares</p>
                             <p>VWO: Vanguard FTSE Emerging Markets Index Fund ETF Shares</p>
                             <p>IAU: iShares Gold Trust</p>
+                            <p>ARKF: ARK Fintech Innovation ETF</p> 
+                            <p>ARKG: ARK Genomic Revolution ETF</p> 
+                            <p>ARKK: ARK Innovation ETF</p> 
+                            <p>ARKQ: ARK Autonomous Technology &amp; Robotics ETF</p> 
+                            <p>ARKW: ARK Next Generation Internet ETF</p>
+                            <p>SPY: SPDR S&amp;P 500 Trust ETF</p>
+                            <p>IEF: iShares 7-10 Year Treasury Bond ETF</p>
                         </div>
                     </div>
                 </div>
