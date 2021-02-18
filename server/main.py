@@ -154,8 +154,9 @@ def create_strategy():
             if log_returns.empty:
                 continue
             
+            mu = np.exp(log_returns.mean()*252).values 
             # Markowitz frontier
-            profit = np.linspace(0., 3., 100)
+            profit = np.linspace(np.amin(mu), np.amax(mu), 100)
             frontier = []
             w = []
             if len(tickers) >= 3:
@@ -170,7 +171,7 @@ def create_strategy():
                     G[n::(2*n+1)] = -1.0
                     # h = matrix(1.0, (2*n,1))
                     h = matrix(np.concatenate((0.5*np.ones((n,1)), -0.03*np.ones((n,1))), axis=0))
-                    A = matrix(np.concatenate((np.ones((1,n)), np.exp(log_returns.mean()*252).values.reshape((1,n))), axis=0))
+                    A = matrix(np.concatenate((np.ones((1,n)), mu.reshape((1,n))), axis=0))
                     b = matrix([1, p], (2, 1))
                     
                     # Compute trade-off.
@@ -184,9 +185,10 @@ def create_strategy():
                         w.append(res_weight)
             elif len(tickers) == 2:
                 for p in profit:
-                    mu = np.exp(log_returns.mean()*252).values
                     S = log_returns.cov().values*252
                     res_weight = [1 - (p-mu[0])/(mu[1]-mu[0]), (p-mu[0])/(mu[1]-mu[0])]
+                    if (res_weight[0] < 0.03) or (res_weight[0] > 0.97):
+                        continue
                     s = math.sqrt(np.matmul(res_weight, np.matmul(S, np.transpose(res_weight))))
                     frontier.append(np.array([p, s]))
                     w.append(res_weight)
