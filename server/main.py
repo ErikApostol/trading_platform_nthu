@@ -23,10 +23,17 @@ from cvxopt.solvers import qp
 
 import pickle
 
+UPLOAD_FOLDER = 'static/custom_data/'
+ALLOWED_EXTENSIONS = {'csv'}
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 main = Flask(__name__)
 #main = Blueprint('main', __name__)
 
 main.config['SECRET_KEY'] = os.urandom(30)
+main.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 #env = Environments(main)
 
@@ -308,6 +315,224 @@ def create_strategy():
     return render_template('create_strategy.html', asset_candidates=asset_candidates if tw=='false' else asset_candidates_tw if tw=='true' else None, tw=tw)
 
 
+@main.route('/create_strategy_upload', methods=['GET', 'POST'])
+def create_strategy_upload():
+    if not (session.get('USERNAME') and session['USERNAME']):
+        flash('使用此功能必須先登入。', 'danger')
+        return redirect('/login')
+    if session['USERNAME'] in black_list:
+        flash('我們已經暫停您建立策略的權利，有疑問請洽finteck@my.nthu.edu.tw', 'danger')
+        return redirect('/')
+
+    
+    if request.method == 'POST':
+        strategy_name = request.form['strategy_name']
+        
+        if strategy_name == '':
+            flash('請取一個名字', 'danger')
+            return render_template('create_strategy_upload.html')
+
+        create_date = datetime.strftime(datetime.now() + timedelta(hours=8), '%Y/%m/%d %H:%M:%S.%f') 
+        
+        f = request.files['fileToUpload']
+        filename = create_date.replace('/', '').replace(' ', '').replace(':', '').replace('.', '') + '.csv'
+        f.save(os.path.join(main.config['UPLOAD_FOLDER'], filename))
+
+        all_data = pd.read_csv(main.config['UPLOAD_FOLDER'] + filename)  
+        all_data['Date'] = pd.to_datetime(all_data['Date'], format='%Y-%m-%d')
+
+        tickers = list(all_data.columns)
+        tickers.remove('Date')
+        print('The list of assets: ', tickers)
+
+        competition = request.form['competition']
+
+        
+        # Turn off progress printing
+        solvers.options['show_progress'] = False
+        
+        
+        def stockpri(ticker, start, end):
+            data = all_data.loc[start:end, ['Date', ticker]]
+            data.set_index('Date', inplace=True)
+            data = data[ticker]
+            return data
+        
+        
+        portfolio_value = pd.Series([100])
+        optimal_weights = None
+        hist_return_series = pd.DataFrame(columns=['quarter', 'quarterly_returns'])
+
+        start_dates = list(np.arange(0, len(all_data), 63)) + [len(all_data)-1]
+        
+        for i in range(len(start_dates)-3):
+        
+            ### Take 6 months to backtest ###
+        
+            start = start_dates[i]
+            end   = start_dates[i+2]+1
+        
+            data = pd.DataFrame({ ticker: stockpri(ticker, start, end) for ticker in tickers })
+            data = data.dropna()
+            
+            returns = data.pct_change() + 1
+            returns = returns.dropna()
+            log_returns = np.log(data.pct_change() + 1)
+            log_returns = log_returns.dropna()
+
+            if log_returns.empty:
+                continue
+            
+            mu = np.exp(log_returns.mean()*252).values 
+            # Markowitz frontier
+            profit = np.linspace(np.amin(mu), np.amax(mu), 100)
+            frontier = []
+            w = []
+            if len(tickers) >= 3:
+                for p in profit:
+                    # Problem data.
+                    n = len(tickers)
+                    S = matrix(log_returns.cov().values*252)
+                    pbar = matrix(0.0, (n,1))
+                    # Gx <= h
+                    G = matrix(0.0, (2*n,n))
+                    G[::(2*n+1)] = 1.0
+                    G[n::(2*n+1)] = -1.0
+                    # h = matrix(1.0, (2*n,1))
+                    h = matrix(np.concatenate((0.5*np.ones((n,1)), -0.03*np.ones((n,1))), axis=0))
+                    A = matrix(np.concatenate((np.ones((1,n)), mu.reshape((1,n))), axis=0))
+                    b = matrix([1, p], (2, 1))
+                    
+                    # Compute trade-off.
+                    res = qp(S, -pbar, G, h, A, b)
+                
+                    if res['status'] == 'optimal':
+                        res_weight = res['x']
+                        print(type(res_weight))
+                        s = math.sqrt(dot(res_weight, S*res_weight))
+                        frontier.append(np.array([p, s]))
+                        w.append(res_weight)
+            elif len(tickers) == 2:
+                for p in profit:
+                    S = log_returns.cov().values*252
+                    res_weight = [1 - (p-mu[0])/(mu[1]-mu[0]), (p-mu[0])/(mu[1]-mu[0])]
+                    if (res_weight[0] < 0.03) or (res_weight[0] > 0.97):
+                        continue
+                    s = math.sqrt(np.matmul(res_weight, np.matmul(S, np.transpose(res_weight))))
+                    frontier.append(np.array([p, s]))
+                    w.append(res_weight)
+
+
+            frontier = np.array(frontier)
+            if frontier.shape == (0,):
+                continue
+            x = np.array(frontier[:, 0])
+            y = np.array(frontier[:, 1])
+        
+            frontier_sharpe_ratios = np.divide(x-1, y)
+            optimal_portfolio_index = np.argmax(frontier_sharpe_ratios)
+            optimal_weights = w[optimal_portfolio_index]
+            
+        
+            ### paper trade on the next three months ###
+        
+            start = start_dates[i+2]
+            end   = start_dates[i+3]+1
+        
+            data = pd.DataFrame({ ticker: stockpri(ticker, start, end) for ticker in tickers })
+            data = data.dropna()
+            
+            returns = data.pct_change() + 1
+            returns = returns.dropna()
+            log_returns = np.log(data.pct_change() + 1)
+            log_returns = log_returns.dropna()
+        
+            portfolio_cum_returns = np.dot(returns, optimal_weights).cumprod()
+            portfolio_value_new_window = portfolio_value.iloc[-1].item() * pd.Series(portfolio_cum_returns)
+            portfolio_value_new_window.index = pd.to_datetime(returns.index)
+            portfolio_value = portfolio_value.append(portfolio_value_new_window) 
+
+            # produce quarterly return
+            hist_return_series.loc[len(hist_return_series)] = [str(start), portfolio_cum_returns[-1]-1]
+            
+        if optimal_weights == None:
+            sharpe_ratio = avg_annual_return = annual_volatility = max_drawdown = 0
+            optimal_weights = [0, ]*len(tickers)
+            hist_returns = None
+            db = get_db()
+            cur = db.cursor()
+            cur.execute('insert into strategy (strategy_name, author, create_date, sharpe_ratio, return, volatility, max_drawdown, tw, competition, hist_returns) values (?,?,?,?,?,?,?,?,?,?)', 
+                       [strategy_name, 
+                        session['USERNAME'], 
+                        create_date,
+                        sharpe_ratio,
+                        avg_annual_return,
+                        annual_volatility,
+                        max_drawdown,
+                        0, # tw_digit,
+                        competition,
+                        hist_returns
+                       ] )
+            db.commit()
+
+            # record the list of tickers into database
+            strategy_id = db.execute('select * from strategy where create_date=?', [create_date]).fetchone()['strategy_id']
+            print('Strategy_id ' + str(strategy_id) + ' optimization fails.')
+            for i in range(len(tickers)):
+                cur.execute('insert into assets_in_strategy (strategy_id, asset_ticker, weight) values (?, ?, ?)', [strategy_id, tickers[i], optimal_weights[i]])
+                db.commit()
+
+            db.close()    
+            flash('無資料或無法畫出馬可維茲邊界，請換一個組合', 'danger')
+            return render_template('create_strategy_upload.html')
+        
+        avg_annual_return = np.exp(np.log(portfolio_value.pct_change() + 1).mean() * 252) - 1
+        annual_volatility = portfolio_value.pct_change().std() * math.sqrt(252)
+        sharpe_ratio = avg_annual_return/annual_volatility
+        max_drawdown = - np.amin(np.divide(portfolio_value, np.maximum.accumulate(portfolio_value)) - 1)
+        
+        print('The last optimal weights are\n', optimal_weights)
+        print('Sharpe ratio: ', sharpe_ratio, ', Return: ', avg_annual_return, ', Volatility: ', annual_volatility, ', Maximum Drawdown: ', max_drawdown)
+
+        # hist_return_series.set_index('quarter', inplace=True)
+        hist_returns = pickle.dumps(hist_return_series)
+        print(hist_return_series)
+
+        db = get_db()
+        cur = db.cursor()
+        cur.execute('insert into strategy (strategy_name, author, create_date, sharpe_ratio, return, volatility, max_drawdown, tw, competition, hist_returns) values (?,?,?,?,?,?,?,?,?,?)', 
+                   [strategy_name, 
+                    session['USERNAME'], 
+                    create_date,
+                    sharpe_ratio,
+                    avg_annual_return,
+                    annual_volatility,
+                    max_drawdown,
+                    0, # tw_digit,
+                    competition,
+                    hist_returns
+                   ] )
+        db.commit()
+        flash('回測已完成，請到討論區查看結果。', 'success')
+
+        # record the list of tickers into database
+        strategy_id = db.execute('select * from strategy where create_date=?', [create_date]).fetchone()['strategy_id']
+
+        # fig, ax = plt.subplots()
+        # hist_return_series.hist(column='quarterly_returns', by='quarter', ax=ax)
+        hist_return_series.plot.bar(x='quarter', y='quarterly_returns').get_figure().savefig('static/img/quarterly_returns/'+str(strategy_id)+'.png')
+        plt.close()
+        
+        plt.plot(portfolio_value.iloc[1:])
+        plt.savefig('static/img/portfolio_values/'+str(strategy_id)+'.png')
+        plt.close()
+        print('Strategy_id ' + str(strategy_id) + ' optimization succeeds.')
+        for i in range(len(tickers)):
+            cur.execute('insert into assets_in_strategy (strategy_id, asset_ticker, weight) values (?, ?, ?)', [strategy_id, tickers[i], optimal_weights[i]])
+            db.commit()
+
+        db.close()    
+    return render_template('create_strategy_upload.html')
 
 
 @main.route('/login')

@@ -7,7 +7,7 @@ import yfinance as yf
 
 tickers = ['ARKF', 'ARKG', 'ARKK', 'ARKQ', 'ARKW']
 for ticker in tickers:
-    new_data = yf.download(ticker, start='2000-01-01', end="2020-10-01")
+    new_data = yf.download(ticker, start='2000-01-01', end="2021-01-01")
     new_data['Ticker'] = ticker
     new_data['Date'] = new_data.index
     all_data = all_data.append(new_data, ignore_index=True)
