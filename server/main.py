@@ -35,7 +35,8 @@ main = Flask(__name__)
 main.config['SECRET_KEY'] = os.urandom(30)
 main.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-#env = Environments(main)
+from confidential_competitions import *
+confidential_competitions_placeholder = ', '.join(['?']*len(confidential_competitions_list))
 
 # Source: https://uniwebsidad.com/libros/explore-flask/chapter-8/custom-filters
 @main.template_filter('my_substitution')
@@ -606,8 +607,11 @@ def signup_post():
 
 @main.route('/forum')
 def forum_index():
+    if not (session.get('USERNAME') and session['USERNAME']):
+        flash('使用此功能必須先登入。', 'danger')
+        return redirect('/login')
     db = get_db()
-    data = db.execute('select * from strategy order by strategy_id desc').fetchall()
+    data = db.execute('select * from strategy where competition not in (' + confidential_competitions_placeholder + ') or author=? order by strategy_id desc', confidential_competitions_list + [session['USERNAME']]).fetchall()
 
     content_list = []
     for d in data:
@@ -693,6 +697,9 @@ def analysis_result():
     tw_digit = 1 if tw=='true' else 0 if tw=='false' else None
 
     if sortby == 'competition':
+        if competition in confidential_competitions_list:
+            flash('本競賽暫不開放查詢', 'danger')
+            return redirect('analysis_result?sortby=default&tw=' + tw +'&competition=none')
         sql_results = db.execute("""select strategy_id,
                                            author,
                                            create_date,
@@ -706,17 +713,17 @@ def analysis_result():
                                     group by author
                                     order by sharpe_ratio desc""", [competition]).fetchall()
     elif sortby == 'default':
-        sql_results = db.execute('select * from strategy where tw=? order by strategy_id desc limit 200', [tw_digit]).fetchall()
+        sql_results = db.execute('select * from strategy where tw=? and (competition not in (' + confidential_competitions_placeholder + ') or author=?) order by strategy_id desc limit 200', [tw_digit] + confidential_competitions_list + [session['USERNAME']]).fetchall()
     elif sortby == 'myself':
         sql_results = db.execute('select * from strategy where tw=? and author=? order by strategy_id desc', [tw_digit, session['USERNAME']]).fetchall()
     elif sortby == 'return':
-        sql_results = db.execute('select * from strategy where tw=? order by return desc limit 200', [tw_digit]).fetchall()
+        sql_results = db.execute('select * from strategy where tw=? and (competition not in (' + confidential_competitions_placeholder + ') or author=?) order by return desc limit 200', [tw_digit] + confidential_competitions_list + [session['USERNAME']]).fetchall()
     elif sortby == 'sharpe':
-        sql_results = db.execute('select * from strategy where tw=? order by sharpe_ratio desc limit 200', [tw_digit]).fetchall()
+        sql_results = db.execute('select * from strategy where tw=? and (competition not in (' + confidential_competitions_placeholder + ') or author=?)  order by sharpe_ratio desc limit 200', [tw_digit] + confidential_competitions_list + [session['USERNAME']]).fetchall()
     elif sortby == 'vol':
-        sql_results = db.execute('select * from strategy where tw=? and volatility!=0 order by volatility asc limit 200', [tw_digit]).fetchall()
+        sql_results = db.execute('select * from strategy where tw=? and (competition not in (' + confidential_competitions_placeholder + ') or author=?)  and volatility!=0 order by volatility asc limit 200', [tw_digit] + confidential_competitions_list + [session['USERNAME']]).fetchall()
     elif sortby == 'mdd':
-        sql_results = db.execute('select * from strategy where tw=? and max_drawdown!=0 order by max_drawdown asc limit 200', [tw_digit]).fetchall()
+        sql_results = db.execute('select * from strategy where tw=? and (competition not in (' + confidential_competitions_placeholder + ') or author=?)  and max_drawdown!=0 order by max_drawdown asc limit 200', [tw_digit] + confidential_competitions_list + [session['USERNAME']]).fetchall()
     db.close()
     return render_template('result.html', results=sql_results, tw=tw)
 
