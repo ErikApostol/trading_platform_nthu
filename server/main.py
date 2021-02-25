@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, render_template, session, jsonify, request, redirect, url_for, flash, g
+from flask import Flask, Blueprint, render_template, session, jsonify, request, redirect, url_for, flash, g, Markup
 from flask_login import login_required, current_user, login_user, logout_user
 #from flask_environments import Environments
 import sqlite3
@@ -294,10 +294,11 @@ def create_strategy():
                     hist_returns
                    ] )
         db.commit()
-        flash('回測已完成，請到討論區查看結果。', 'success')
 
         # record the list of tickers into database
         strategy_id = db.execute('select * from strategy where create_date=?', [create_date]).fetchone()['strategy_id']
+
+        flash(Markup('回測已完成，詳情請<a href="/post_page?post_id=' + str(strategy_id) + '">點這裡查看</a>。'), 'success')
 
         # fig, ax = plt.subplots()
         # hist_return_series.hist(column='quarterly_returns', by='quarter', ax=ax)
@@ -514,10 +515,11 @@ def create_strategy_upload():
                     hist_returns
                    ] )
         db.commit()
-        flash('回測已完成，請到討論區查看結果。', 'success')
 
         # record the list of tickers into database
         strategy_id = db.execute('select * from strategy where create_date=?', [create_date]).fetchone()['strategy_id']
+
+        flash(Markup('回測已完成，詳情請<a href="/post_page?post_id=' + str(strategy_id) + '">點這裡查看</a>。'), 'success')
 
         # fig, ax = plt.subplots()
         # hist_return_series.hist(column='quarterly_returns', by='quarter', ax=ax)
